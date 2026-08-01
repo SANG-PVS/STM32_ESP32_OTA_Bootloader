@@ -131,7 +131,7 @@ void min_application_handler(uint8_t min_id, uint8_t const *min_payload, uint8_t
       if (ota_response-> command_id == OTA_RESPONSE
         && ota_response->ack == ACK_RESPONSE)
       {
-        char *token = strtok(NULL, "\n");
+        char *token = strtok(NULL, "\r\n");
         if (token != NULL)
         {
           convert_string_intel_hex_to_array_hex(token, hex_data);
