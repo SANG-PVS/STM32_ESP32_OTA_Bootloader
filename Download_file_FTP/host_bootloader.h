@@ -193,3 +193,5 @@ void host_bootloader_init()
   pinMode(2,OUTPUT);
   ota_state = OTA_IDLE_STATE;
 }
+
+// haha 
