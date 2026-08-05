@@ -23,7 +23,7 @@
 #define MAX_HEX_BUF_SIZE    (50 * 1024) 
 
 // Thời gian định kỳ kiểm tra update (Mặc định: 5 phút = 300,000 ms)
-#define OTA_CHECK_INTERVAL  (1 * 60 * 1000UL) 
+#define OTA_CHECK_INTERVAL  (2 * 60 * 1000UL) 
 
 // ================= BIẾN TOÀN CỤC =================
 char file_hex[MAX_HEX_BUF_SIZE];

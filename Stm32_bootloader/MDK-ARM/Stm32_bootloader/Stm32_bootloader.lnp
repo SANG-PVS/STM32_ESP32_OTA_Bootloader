@@ -22,6 +22,7 @@
 "stm32_bootloader\port_min.o"
 "stm32_bootloader\bootloader.o"
 "stm32_bootloader\bootloader_command.o"
+"stm32_bootloader\flash.o"
 --strict --scatter "Stm32_bootloader\Stm32_bootloader.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers

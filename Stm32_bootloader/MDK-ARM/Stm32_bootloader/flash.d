@@ -1,4 +1,4 @@
-stm32_bootloader/main.o: ..\Core\Src\main.c ..\Core\Inc\main.h \
+stm32_bootloader/flash.o: ..\App\Flash.c ..\App\Flash.h \
   ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal.h \
   ..\Core\Inc\stm32f1xx_hal_conf.h \
   ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_rcc.h \
@@ -18,7 +18,4 @@ stm32_bootloader/main.o: ..\Core\Src\main.c ..\Core\Inc\main.h \
   ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_flash.h \
   ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_flash_ex.h \
   ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_pwr.h \
-  ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_uart.h \
-  ..\My_lib\port_min.h ..\My_lib\min.h ..\App\Uart.h \
-  ..\My_lib\Ringbuffer.h ..\App\bootloader.h ..\App\bootloader_command.h \
-  ..\App\Flash.h
+  ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_uart.h

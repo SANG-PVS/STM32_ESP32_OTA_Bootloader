@@ -1,7 +1,9 @@
 enum 
 {
     Check_some_ok,
-    Check_some_error
+    Check_some_error,
+    END_FILE,
+    DATA_RECORD
 };
 
 

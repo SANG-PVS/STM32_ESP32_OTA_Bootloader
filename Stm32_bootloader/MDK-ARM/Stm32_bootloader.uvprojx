@@ -519,6 +519,11 @@
               <FileType>1</FileType>
               <FilePath>..\App\bootloader_command.c</FilePath>
             </File>
+            <File>
+              <FileName>Flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\App\Flash.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
