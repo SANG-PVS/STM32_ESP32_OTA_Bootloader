@@ -26,7 +26,6 @@ typedef enum {
 
 OTA_State_Typedef ota_state = OTA_IDLE_STATE;
 
-// Hàm xóa rác bộ đệm UART RX để tránh lệch nhịp khi STM32 phát Request sớm
 void clear_uart_rx_buffer(void) {
   while (Serial2.available() > 0) {
     Serial2.read();
@@ -55,13 +54,13 @@ void ota_send_response(Ota_Response_Name_Typdef Response_Name) {
 
 void ota_send_infor() {
   OTA_Infor_t infor;
-  memset(&infor, 0, sizeof(infor)); // Dọn sạch rác RAM trên Stack
+  memset(&infor, 0, sizeof(infor));
   
   infor.command_id = OTA_INFOR;
   infor.len = sizeof(infor.name) + sizeof(infor.version);
   
   strncpy((char*)infor.name, "FTP_FIRMWARE", sizeof(infor.name) - 1);
-  strncpy((char*)infor.version, new_version.c_str(), sizeof(infor.version) - 1); // Sao chép an toàn
+  strncpy((char*)infor.version, new_version.c_str(), sizeof(infor.version) - 1);
   
   bootloader_send_data(&infor, sizeof(infor));
 }
@@ -98,7 +97,7 @@ uint8_t get_next_valid_hex_data(uint8_t *hex_data_out, bool is_first_line) {
 
     if (hex_data_out[3] == 0x00) { // Record Data
       if (check_some(hex_data_out, hex_data_out[0] + 5) == Check_some_ok) {
-        swap_4_byte(&hex_data_out[4], hex_data_out[0]);
+        //swap_4_byte(&hex_data_out[4], hex_data_out[0]);
         return 1;
       }
     } else if (hex_data_out[3] == 0x01) { // EOF Record
@@ -111,20 +110,29 @@ uint8_t get_next_valid_hex_data(uint8_t *hex_data_out, bool is_first_line) {
 void min_application_handler(uint8_t min_id, uint8_t const *min_payload, uint8_t len_payload, uint8_t port) {
   uint8_t hex_data[21];
 
-  switch (ota_state) {
-    case OTA_IDLE_STATE: {
-      OTA_Code_t *ota_code_p = (OTA_Code_t *)min_payload;
-      if (ota_code_p->command_id == OTA_CODE && ota_code_p->ota_code == OTA_REQUEST_CODE) {
-        if (strlen(file_hex) > 0) {
-          Serial.println("\n[ESP32] <<< Nhan REQUEST tu STM32 & Co Firmware moi san sang!");
-          ota_state = OTA_START_STATE;
-          Serial.println("[ESP32] >>> Gui OTA_START_CODE...");
-          ota_send_code(OTA_START_CODE);
-        }
+  OTA_Code_t *ota_code_p = (OTA_Code_t *)min_payload;
+  if (ota_code_p->command_id == OTA_CODE && ota_code_p->ota_code == OTA_REQUEST_CODE) {
+    // Trường hợp 1: Có Firmware mới trong RAM -> Bắt đầu nạp OTA
+    if (strlen(file_hex) > 0) {
+      Serial.println("\n[ESP32] <<< Nhan REQUEST tu STM32 & Co Firmware moi san sang!");
+      ota_state = OTA_START_STATE;
+      Serial.println("[ESP32] >>> Gui OTA_START_CODE...");
+      ota_send_code(OTA_START_CODE);
+      return;
+    } 
+    // Trường hợp 2: Không có Firmware mới (mới nhất rồi) -> Trả lời OTA_END_CODE để STM32 biết
+    else {
+      static unsigned long last_log = 0;
+      if (millis() - last_log >= 3000) {
+        last_log = millis();
+        Serial.println("[ESP32] <<< Nhan REQUEST tu STM32 nhung Firmware da la moi nhat. Báo STM32 khong co Update!");
       }
-      break;
+      ota_send_code(OTA_END_CODE); // Gửi báo không có bản update mới
+      return;
     }
+  }
 
+  switch (ota_state) {
     case OTA_START_STATE: {
       OTA_Response_t *res = (OTA_Response_t*)min_payload;
       if (res->command_id == OTA_RESPONSE && res->ack == ACK_RESPONSE) {
