@@ -43,7 +43,7 @@ typedef struct __attribute__((packed))
   uint8_t command_id;
   uint8_t len;
   uint8_t name[50]; // cho biet ten cua phien ban code
-  uint8_t version[5];// cho biet day la phien ban code nao 
+  uint8_t version[10];// cho biet day la phien ban code nao 
 } OTA_Infor_t;
 
 typedef struct __attribute__((packed))

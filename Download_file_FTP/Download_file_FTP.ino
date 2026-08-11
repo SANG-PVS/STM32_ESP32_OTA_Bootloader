@@ -1,21 +1,21 @@
 #include "host_bootloader.h"
-#include "port_min.h"
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  // 1. Khởi tạo & Kiểm tra Version lần đầu khi cấp điện
+  host_bootloader_init();
+
+  // Tải Firmware FTP từ Cloud về RAM
   dowload_file_init();
 
-  // 2. Khởi tạo MIN protocol và Bootloader
-  host_bootloader_init();
+  // Xóa sạch bộ đệm UART rác tích tụ trong lúc bận tải Wi-Fi / FTP
+  clear_uart_rx_buffer();
+  min_init_context(&min_ctx, MIN_PORT); // Reset lại MIN context chuẩn
+  Serial.println("[ESP32] Da xoa ruc UART RX. San sang bat tay OTA tu STM32!");
 }
 
 void loop() {
-  // 3. Kiểm tra version.txt trên Cloud định kỳ
   dowload_file_handle();
-
-  // 4. Lắng nghe và xử lý luồng truyền dữ liệu OTA với STM32
   host_bootloader_handle();
 }

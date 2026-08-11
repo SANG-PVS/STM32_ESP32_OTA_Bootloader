@@ -5,7 +5,7 @@
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <ESP32_FTPClient.h>
-#include <Preferences.h> // Thư viện đọc/ghi Flash NVS chống mất điện
+#include <Preferences.h>
 
 // ================= MACRO CẤU HÌNH HỆ THỐNG =================
 #define WIFI_SSID           "202 H30"
@@ -19,16 +19,15 @@
 #define FILE_VERSION_TARGET "Version.txt"
 #define FILE_HEX_TARGET     "App.hex"
 
-// Dung lượng tối đa bộ nhớ đệm cho file HEX (VD: 50KB)
-#define MAX_HEX_BUF_SIZE    (50 * 1024) 
+// Giảm bộ đệm RAM xuống 30KB (vừa đủ dung lượng file App.hex)
+#define MAX_HEX_BUF_SIZE    (30 * 1024) 
 
-// Thời gian định kỳ kiểm tra update (Mặc định: 5 phút = 300,000 ms)
-#define OTA_CHECK_INTERVAL  (2 * 60 * 1000UL) 
+#define OTA_CHECK_INTERVAL  (5 * 60 * 1000UL) 
 
 // ================= BIẾN TOÀN CỤC =================
 char file_hex[MAX_HEX_BUF_SIZE];
-String current_version = "0.0.0"; // Version hiện tại đang chạy trên STM32
-String new_version = "";          // Version đọc từ Cloud về
+String current_version = "0.0.0"; 
+String new_version = "";          
 
 ESP32_FTPClient ftp(FTP_SERVER, FTP_USER, FTP_PASS);
 Preferences prefs;
@@ -36,9 +35,6 @@ unsigned long last_check_time = 0;
 
 // ================= HÀM XỬ LÝ (FUNCTIONS) =====================
 
-/**
- * @brief Kết nối Wi-Fi có Timeout
- */
 bool wifi_connect(void) 
 {
   if (WiFi.status() == WL_CONNECTED) return true;
@@ -50,7 +46,7 @@ bool wifi_connect(void)
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
-    if (++timeout > 30) { // Timeout 15s
+    if (++timeout > 30) {
       Serial.println("\n[FTP] WiFi Connection Failed!");
       return false;
     }
@@ -62,9 +58,6 @@ bool wifi_connect(void)
   return true;
 }
 
-/**
- * @brief Tải duy nhất file version.txt từ Cloud về dạng chuỗi String
- */
 String fetch_cloud_version(void) 
 {
   ftp.OpenConnection();
@@ -73,18 +66,13 @@ String fetch_cloud_version(void)
   String version_str = "";
   ftp.InitFile("Type A");
   
-  // Tải nội dung version.txt
   ftp.DownloadString(FILE_VERSION_TARGET, version_str);
   ftp.CloseConnection();
 
-  // Xóa khoảng trắng / xuống dòng thừa (\r, \n)
   version_str.trim();
   return version_str;
 }
 
-/**
- * @brief Tải file App.hex về mảng file_hex khi có bản cập nhật mới
- */
 bool fetch_hex_file(void) 
 {
   ftp.OpenConnection();
@@ -123,16 +111,13 @@ bool fetch_hex_file(void)
   Serial.println("[FTP] Downloading App.hex to RAM...");
   
   ftp.DownloadFile(FILE_HEX_TARGET, (unsigned char*)file_hex, fileSize, false);
-  file_hex[fileSize] = '\0'; // Đánh dấu kết thúc chuỗi
+  file_hex[fileSize] = '\0'; 
 
   ftp.CloseConnection();
   Serial.println("[FTP] App.hex Downloaded successfully!");
   return true;
 }
 
-/**
- * @brief Kiểm tra version và tải file Hex nếu phát hiện bản mới
- */
 bool check_and_download_ota(void) 
 {
   if (!wifi_connect()) return false;
@@ -142,40 +127,29 @@ bool check_and_download_ota(void)
   
   Serial.printf("[OTA Check] Current Ver: %s | Cloud Ver: %s\n", current_version.c_str(), new_version.c_str());
 
-  // Nếu file rỗng hoặc trùng version hiện tại -> Bỏ qua
   if (new_version.length() == 0 || new_version.equals(current_version)) {
     Serial.println("[OTA Check] Firmware is up to date. Skip downloading App.hex.");
     return false;
   }
 
-  // Nếu có version mới -> Tiến hành kéo App.hex về
   Serial.println("[OTA Check] New Version detected! Starting download...");
   return fetch_hex_file();
 }
 
-/**
- * @brief Khởi tạo module Download File
- */
 bool dowload_file_init(void) 
 {
   memset(file_hex, 0, sizeof(file_hex));
   
-  // Đọc Version đã lưu trong Flash NVS của ESP32 ra
   prefs.begin("ota_info", false);
-  current_version = prefs.getString("ver", "0.0.0"); // Mặc định 0.0.0 nếu chưa có
+  current_version = prefs.getString("ver", "0.0.0"); 
   prefs.end();
   
   Serial.printf("[Init] System started with Firmware Version: %s\n", current_version.c_str());
 
   wifi_connect();
-  
-  // Lần đầu bật nguồn: Kiểm tra ngay có bản mới không
   return check_and_download_ota();
 }
 
-/**
- * @brief Gọi trong loop() để kiểm tra cập nhật định kỳ (Polling)
- */
 void dowload_file_handle(void) 
 {
   if (millis() - last_check_time >= OTA_CHECK_INTERVAL) {
@@ -184,9 +158,6 @@ void dowload_file_handle(void)
   }
 }
 
-/**
- * @brief Lưu Version mới vào Flash NVS (Chỉ gọi khi STM32 báo nạp thành công!)
- */
 void save_installed_version(void) 
 {
   if (new_version.length() > 0) {

@@ -3,7 +3,7 @@
 
 #define RING_BUFFER_SIZE 128
 static Ring_buffer_t my_ring_buffer;
-static uint8_t buffer[RING_BUFFER_SIZE];
+uint8_t buffer[RING_BUFFER_SIZE];
 
 
 void Receive_rx (uint8_t data)
