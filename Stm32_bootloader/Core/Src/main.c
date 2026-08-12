@@ -108,12 +108,6 @@ int main(void)
 	Uart_init();
   HAL_UART_Receive_IT(&huart1, &data_rx, 1);
 	bootloader_init();
-
-//  uint16_t flag = 1;
-//  if (flag == 1)
-//  {
-//    ota_send_code(OTA_REQUEST_CODE);
-//  }
   /* USER CODE END 2 */
 
   /* Infinite loop */

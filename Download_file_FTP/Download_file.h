@@ -1,3 +1,5 @@
+// Driver tải file Intel Hex từ server về
+
 #ifndef DOWNLOAD_FILE_H
 #define DOWNLOAD_FILE_H
 
@@ -8,12 +10,12 @@
 #include <Preferences.h>
 
 // ================= MACRO CẤU HÌNH HỆ THỐNG =================
-#define WIFI_SSID           "202 H30"
-#define WIFI_PASS           "68686868"
+#define WIFI_SSID           ""
+#define WIFI_PASS           ""
 
 #define FTP_SERVER          "ftpupload.net"
-#define FTP_USER            "if0_42484011"
-#define FTP_PASS            "Sang03022004"
+#define FTP_USER            ""
+#define FTP_PASS            ""
 #define FTP_PATH            "/htdocs/Firmware"
 
 #define FILE_VERSION_TARGET "Version.txt"

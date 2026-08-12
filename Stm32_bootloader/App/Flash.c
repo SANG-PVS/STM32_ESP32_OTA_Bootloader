@@ -12,7 +12,7 @@ void Flash_lock()
 }
 
 
-void Flash_erease(uint32_t address)
+void Flash_erease(uint32_t address) // hàm này dùng de xoa Flash
 {
     FLASH_EraseInitTypeDef EraseInitStruct;
     //EraseInitStruct.Banks =1;
@@ -24,17 +24,16 @@ void Flash_erease(uint32_t address)
     
     HAL_FLASHEx_Erase(&EraseInitStruct, &PageError);
 
-	
 }
 
-void Flash_write_arr(uint32_t address, uint8_t *data, uint16_t len)
+void Flash_write_arr(uint32_t address, uint8_t *data, uint16_t len) // hàm này dùng de ghi 2 byte mot lan ( HALFWORD)
 {
 		for (uint16_t i =0; i<len; i+=2){
 			HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, address + i, data[i]|((uint16_t)data[i+1]<<8));
 		}	
 }
 
-void Flash_read_arr(uint32_t address, uint8_t *data, uint16_t len)
+void Flash_read_arr(uint32_t address, uint8_t *data, uint16_t len) // hàm nay dung de doc 2 byte mot lan
 {
     for (uint16_t i=0; i<len; i+=2){
       uint16_t data_temp = *(volatile uint32_t *)(address + i);

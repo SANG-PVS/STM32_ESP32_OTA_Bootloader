@@ -22,21 +22,21 @@ typedef enum {
   OTA_SEND_INFOR_STATE,
   OTA_SEND_DATA_STATE,
   OTA_END_STATE,
-} OTA_State_Typedef;
+} OTA_State_Typedef; // state machine
 
 OTA_State_Typedef ota_state = OTA_IDLE_STATE;
 
-void clear_uart_rx_buffer(void) {
+void clear_uart_rx_buffer(void) { // xóa tín hiệu request stm32 gửi trong quá trình kết nối wifi
   while (Serial2.available() > 0) {
     Serial2.read();
   }
 }
 
-void bootloader_send_data(void *data, uint8_t len) {
-  min_send_frame(&min_ctx, MIN_ID, (uint8_t *)data, len);
+void bootloader_send_data(void *data, uint8_t len) { // hàm cấp thấp gói hàm min_send_frame lại nhìn cho gọn
+  min_send_frame(&min_ctx, MIN_ID, (uint8_t *)data, len); // hàm gửi dữ liệu dùng MIN PROTOCOL
 }
 
-void ota_send_code(Ota_Code_Name_Typdef Code_Name) {
+void ota_send_code(Ota_Code_Name_Typdef Code_Name) { // hàm gửi mã lệnh cho STM32 
   OTA_Code_t cmd;
   cmd.command_id = OTA_CODE;
   cmd.len = 1;
@@ -44,7 +44,7 @@ void ota_send_code(Ota_Code_Name_Typdef Code_Name) {
   bootloader_send_data(&cmd, sizeof(cmd));
 }
 
-void ota_send_response(Ota_Response_Name_Typdef Response_Name) {
+void ota_send_response(Ota_Response_Name_Typdef Response_Name) { // hàm gửi phản hồi STM32 dùng để gửi phản hồi cho ESP32 khi nhận được dữ liệu
   OTA_Response_t response;
   response.command_id = OTA_RESPONSE;
   response.len = 1;
@@ -52,7 +52,7 @@ void ota_send_response(Ota_Response_Name_Typdef Response_Name) {
   bootloader_send_data(&response, sizeof(response));
 }
 
-void ota_send_infor() {
+void ota_send_infor() { // hàm dùng để gửi thông tin ( version, name) cho STM32
   OTA_Infor_t infor;
   memset(&infor, 0, sizeof(infor));
   
@@ -65,7 +65,7 @@ void ota_send_infor() {
   bootloader_send_data(&infor, sizeof(infor));
 }
 
-void ota_send_data(uint8_t *data, uint8_t len) {
+void ota_send_data(uint8_t *data, uint8_t len) { // hàm dùng để gửi data
   OTA_Data_t ota_data;
   ota_data.command_id = OTA_DATA;
   ota_data.len = len;
@@ -73,7 +73,7 @@ void ota_send_data(uint8_t *data, uint8_t len) {
   bootloader_send_data(&ota_data, sizeof(ota_data));
 }
 
-uint8_t get_next_valid_hex_data(uint8_t *hex_data_out, bool is_first_line) {
+uint8_t get_next_valid_hex_data(uint8_t *hex_data_out, bool is_first_line) { // kiểm tra và lọc ra dòng đầu tiên với data
   if (is_first_line) {
     hex_ptr = file_hex;
   }
@@ -197,8 +197,8 @@ void min_application_handler(uint8_t min_id, uint8_t const *min_payload, uint8_t
 }
 
 void host_bootloader_init() {
-  min_init_context(&min_ctx, MIN_PORT);
-  Serial2.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
+  min_init_context(&min_ctx, MIN_PORT); // cấu hình MIN
+  Serial2.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN); // cấu hình UART
   ota_state = OTA_IDLE_STATE;
   Serial.println("[ESP32] Host Bootloader & Serial2 Ready!");
 }
@@ -206,7 +206,7 @@ void host_bootloader_init() {
 void host_bootloader_handle() {
   while (Serial2.available() > 0) {
     uint8_t c = Serial2.read();
-    min_poll(&min_ctx, &c, 1);
+    min_poll(&min_ctx, &c, 1);// Min nhận dữ liệu kiểm tra hợp lệ thì nhảy qua hàm " min_application_handler()" để xử lý
   }
 }
 

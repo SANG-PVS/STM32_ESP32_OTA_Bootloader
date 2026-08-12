@@ -1,3 +1,5 @@
+// khai báo các hàm mặc định của MiN
+
 #ifndef PORT_MIN_H
 #define PORT_MIN_H
 

@@ -16,7 +16,7 @@ typedef enum
 	OTA_SEND_INFOR_STATE,
 	OTA_SEND_DATA_STATE,
 	OTA_END_STATE,
-} OTA_State_Typedef;
+} OTA_State_Typedef;  // state machine
 
 OTA_State_Typedef ota_state;
 static uint32_t t_last_rx = 0;
@@ -76,7 +76,7 @@ void bootloader_request_update(void)
 	ota_send_code(OTA_REQUEST_CODE);
 }
 
-static void bootloader_erase_app_flash(void)
+static void bootloader_erase_app_flash(void)  // hàm dùng de xoa tung page Flash ( 1 KB) tru page Flash cuoi cung de luu Flag
 {
 	Flash_unlock();
 	for (uint32_t addr = FLASH_APP_START_ADDR; addr < FLASH_OTA_FLAG_ADDR; addr += 1024)
@@ -162,13 +162,13 @@ void min_application_handler(uint8_t min_id, uint8_t const *min_payload, uint8_t
 			if (ota_data->command_id == OTA_DATA)
 			{
 				Flash_unlock();
-				Flash_write_arr(current_flash_addr, ota_data->data, ota_data->len);
+				Flash_write_arr(current_flash_addr, ota_data->data, ota_data->len); // ghi data nhan duoc vào phan vung APP da chon san
 				Flash_lock();
 				current_flash_addr += ota_data->len;
 
 				ota_send_response(ACK_RESPONSE);
 			}
-			else if (ota_data->command_id == OTA_CODE)
+			else if (ota_data->command_id == OTA_CODE) // truong hop esp32 da gui xong du lieu va esp32 gui lenh end code
 			{
 				OTA_Code_t *ota_code = (OTA_Code_t *)min_payload;
 				if (ota_code->ota_code == OTA_END_CODE)

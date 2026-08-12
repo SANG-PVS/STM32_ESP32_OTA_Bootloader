@@ -1,3 +1,6 @@
+// driver cấp thấp để xử lý chuỗi Intel string hex nhận được từ server
+
+
 enum 
 {
     Check_some_ok,
@@ -24,7 +27,7 @@ uint8_t check_some(uint8_t *buff, uint8_t len)
     
     return Check_some_error;
 }
-int8_t char_to_byte (char c)
+int8_t char_to_byte (char c) // dùng để chuyển đổi giá trị string về giá trị thập phân dựa trên bảng mã ASCII
 {
     if (c>= '0' && c<= '9'){ return (c -'0');}
     
@@ -36,7 +39,7 @@ int8_t char_to_byte (char c)
 }
 
 
-void convert_string_intel_hex_to_array_hex (char *input, uint8_t *output)
+void convert_string_intel_hex_to_array_hex (char *input, uint8_t *output)  // hàm này bỏ qua kí tự đầu Start đầu tiên của file Intel Hex và lấy 2 kí tự liền nhau ghép thành một byte
 {
     uint8_t index = 0;
     if (*input == ':')
@@ -59,7 +62,7 @@ void swap(uint8_t *a, uint8_t *b)
     *a = *b;
     *b = temp;
 }
-void swap_4_byte (uint8_t *data, uint8_t len)
+void swap_4_byte (uint8_t *data, uint8_t len) // hàm này không dùng
 {
     for (uint8_t i =0; i< len; i+= 4)
     {
