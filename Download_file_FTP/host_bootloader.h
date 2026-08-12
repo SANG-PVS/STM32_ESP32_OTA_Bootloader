@@ -97,7 +97,6 @@ uint8_t get_next_valid_hex_data(uint8_t *hex_data_out, bool is_first_line) {
 
     if (hex_data_out[3] == 0x00) { // Record Data
       if (check_some(hex_data_out, hex_data_out[0] + 5) == Check_some_ok) {
-        //swap_4_byte(&hex_data_out[4], hex_data_out[0]);
         return 1;
       }
     } else if (hex_data_out[3] == 0x01) { // EOF Record
@@ -111,25 +110,30 @@ void min_application_handler(uint8_t min_id, uint8_t const *min_payload, uint8_t
   uint8_t hex_data[21];
 
   OTA_Code_t *ota_code_p = (OTA_Code_t *)min_payload;
+
+  // Khi nhận yêu cầu Update từ STM32
   if (ota_code_p->command_id == OTA_CODE && ota_code_p->ota_code == OTA_REQUEST_CODE) {
-    // Trường hợp 1: Có Firmware mới trong RAM -> Bắt đầu nạp OTA
-    if (strlen(file_hex) > 0) {
-      Serial.println("\n[ESP32] <<< Nhan REQUEST tu STM32 & Co Firmware moi san sang!");
+    if (ota_state != OTA_IDLE_STATE) return;
+
+    Serial.println("\n[ESP32] <<< Nhan REQUEST tu STM32! Tien hanh kiem tra Firmware FTP Cloud...");
+
+    // 1. Kết nối FTP và kiểm tra Version lập tức
+    bool has_new_fw = check_and_download_ota();
+
+    // 2. Xóa sạch dữ liệu UART tích tụ trong lúc bận kết nối FTP
+    clear_uart_rx_buffer();
+    min_init_context(&min_ctx, MIN_PORT);
+
+    // 3. Phản hồi cho STM32
+    if (has_new_fw) {
+      Serial.println("[ESP32] >>> Co Firmware moi! Gui OTA_START_CODE...");
       ota_state = OTA_START_STATE;
-      Serial.println("[ESP32] >>> Gui OTA_START_CODE...");
       ota_send_code(OTA_START_CODE);
-      return;
-    } 
-    // Trường hợp 2: Không có Firmware mới (mới nhất rồi) -> Trả lời OTA_END_CODE để STM32 biết
-    else {
-      static unsigned long last_log = 0;
-      if (millis() - last_log >= 3000) {
-        last_log = millis();
-        Serial.println("[ESP32] <<< Nhan REQUEST tu STM32 nhung Firmware da la moi nhat. Báo STM32 khong co Update!");
-      }
-      ota_send_code(OTA_END_CODE); // Gửi báo không có bản update mới
-      return;
+    } else {
+      Serial.println("[ESP32] >>> Firmware moi nhat / Khong co Update. Gui OTA_END_CODE...");
+      ota_send_code(OTA_END_CODE);
     }
+    return;
   }
 
   switch (ota_state) {
@@ -171,7 +175,7 @@ void min_application_handler(uint8_t min_id, uint8_t const *min_payload, uint8_t
           Serial.println("[ESP32] >>> Gui goi DATA tiep theo...");
           ota_send_data(&hex_data[4], hex_data[0]);
         } else {
-          Serial.println("[ESP32] >>> Da truyen het File HEX Cloud! Gui OTA_END_CODE...");
+          Serial.println("[ESP32] >>> Da truyen het File HEX! Gui OTA_END_CODE...");
           ota_send_code(OTA_END_CODE);
           ota_state = OTA_END_STATE;
         }
@@ -182,7 +186,7 @@ void min_application_handler(uint8_t min_id, uint8_t const *min_payload, uint8_t
     case OTA_END_STATE: {
       OTA_Response_t *res = (OTA_Response_t*)min_payload;
       if (res->command_id == OTA_RESPONSE && res->ack == ACK_RESPONSE) {
-        Serial.println("\n[ESP32] === THANH CONG! Da truyen xong toan bo File HEX sang STM32 ===");
+        Serial.println("\n[ESP32] === THANH CONG! Da truyen xong File HEX sang STM32 ===");
         save_installed_version();
         memset(file_hex, 0, sizeof(file_hex));
         ota_state = OTA_IDLE_STATE;

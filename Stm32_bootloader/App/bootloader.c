@@ -3,6 +3,10 @@
 #define MIN_PORT 0
 #define MIN_ID 1
 
+// Định nghĩa vị trí RAM cờ Magic để nhận tín hiệu từ App
+#define BOOT_MAGIC_ADDR  0x20003FF0
+#define BOOT_MAGIC_KEY   0xDEADBEEF
+
 struct min_context min_ctx;
 
 typedef enum 
@@ -240,16 +244,26 @@ void bootloader_init(void)
 	ota_state = OTA_IDLE_STATE;
 	t_last_rx = HAL_GetTick();
 
+	// Đọc cờ RAM từ App truyền sang (nếu có)
+	uint32_t boot_magic = *(__IO uint32_t*)(BOOT_MAGIC_ADDR);
+	
+	// Đọc cờ trạng thái App trong Flash
 	uint32_t current_ota_flag = *(volatile uint32_t*)FLASH_OTA_FLAG_ADDR;
 	
-	// 1. Nếu đã có App hợp lệ -> Nhảy thẳng vào App NGAY LẬP TỨC
-	if (current_ota_flag == OTA_FLAG_VALID_MAGIC)
+	// 1. Nếu đến từ App (do người dùng nhấn nút kích hoạt Update)
+	if (boot_magic == BOOT_MAGIC_KEY)
+	{
+		*(__IO uint32_t*)(BOOT_MAGIC_ADDR) = 0; // Xóa cờ RAM
+		bootloader_request_update();            // Đứng lại ở Bootloader và gửi Request xin bản code mới từ ESP32
+	}
+	// 2. Khởi động bình thường / Bật nguồn và đã có App hợp lệ -> Nhảy thẳng sang App
+	else if (current_ota_flag == OTA_FLAG_VALID_MAGIC)
 	{
 		bootloader_jump_to_app();
 	}
+	// 3. Nếu cờ Flash không hợp lệ (App lỗi/chưa nạp) -> Gửi Request yêu cầu update ngay
 	else
 	{
-		// 2. Nếu cờ không hợp lệ -> Gửi Request yêu cầu update ngay
 		bootloader_request_update();
 	}
 }

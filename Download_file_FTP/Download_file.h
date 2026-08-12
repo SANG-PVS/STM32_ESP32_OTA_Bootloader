@@ -22,8 +22,6 @@
 // Giảm bộ đệm RAM xuống 30KB (vừa đủ dung lượng file App.hex)
 #define MAX_HEX_BUF_SIZE    (30 * 1024) 
 
-#define OTA_CHECK_INTERVAL  (5 * 60 * 1000UL) 
-
 // ================= BIẾN TOÀN CỤC =================
 char file_hex[MAX_HEX_BUF_SIZE];
 String current_version = "0.0.0"; 
@@ -31,7 +29,6 @@ String new_version = "";
 
 ESP32_FTPClient ftp(FTP_SERVER, FTP_USER, FTP_PASS);
 Preferences prefs;
-unsigned long last_check_time = 0;
 
 // ================= HÀM XỬ LÝ (FUNCTIONS) =====================
 
@@ -120,6 +117,8 @@ bool fetch_hex_file(void)
 
 bool check_and_download_ota(void) 
 {
+  memset(file_hex, 0, sizeof(file_hex)); // Clear RAM buffer cũ trước khi check
+  
   if (!wifi_connect()) return false;
 
   Serial.println("\n[OTA Check] Checking version.txt from Cloud...");
@@ -146,16 +145,12 @@ bool dowload_file_init(void)
   
   Serial.printf("[Init] System started with Firmware Version: %s\n", current_version.c_str());
 
-  wifi_connect();
-  return check_and_download_ota();
+  return wifi_connect();
 }
 
 void dowload_file_handle(void) 
 {
-  if (millis() - last_check_time >= OTA_CHECK_INTERVAL) {
-    last_check_time = millis();
-    check_and_download_ota();
-  }
+  // Không dùng timer 5 phút nữa
 }
 
 void save_installed_version(void) 
